@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Infinite Brainstorm avec IA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .settings-btn {
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .settings-btn:hover {
+            background: rgba(168, 85, 247, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .ai-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 1.5rem;
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            min-height: calc(100vh - 100px);
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: fit-content;
+        }
+
+        .sidebar h2 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: #a855f7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cell {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.2));
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.8rem;
+            cursor: grab;
+            transition: all 0.3s;
+            text-align: center;
+            font-weight: 600;
+            user-select: none;
+        }
+
+        .cell:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .cell:active {
+            cursor: grabbing;
+        }
+
+        .fusion-zone {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            border: 2px dashed rgba(168, 85, 247, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            min-height: 600px;
+            overflow: hidden;
+        }
+
+        .workspace-cell {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.2));
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            cursor: grab;
+            user-select: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            z-index: 1;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .workspace-cell:hover {
+            box-shadow: 0 5px 20px rgba(168, 85, 247, 0.5);
+            transform: scale(1.05);
+        }
+
+        .workspace-cell:active {
+            cursor: grabbing;
+            z-index: 100;
+        }
+
+        .workspace-cell.dragging {
+            opacity: 0.8;
+            z-index: 1000;
+        }
+
+        .workspace-cell.highlight {
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.8);
+            border: 2px solid #a855f7;
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+
+        .workspace-cell.ai-generating {
+            animation: aiPulse 1.5s ease-in-out infinite;
+            border: 2px solid #10b981;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes aiPulse {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+                border-color: #10b981;
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(16, 185, 129, 1);
+                border-color: #34d399;
+            }
+        }
+
+        .workspace-cell.new-cell {
+            animation: popIn 0.5s ease-out;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .delete-cell-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .workspace-cell:hover .delete-cell-btn {
+            opacity: 1;
+        }
+
+        .delete-cell-btn:hover {
+            background: #dc2626;
+        }
+
+        .workspace-helper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.4);
+            pointer-events: none;
+            font-size: 1.2rem;
+        }
+
+        .add-cell-btn {
+            width: 100%;
+            background: rgba(168, 85, 247, 0.2);
+            border: 2px dashed rgba(168, 85, 247, 0.5);
+            color: #fff;
+            padding: 0.8rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .add-cell-btn:hover {
+            background: rgba(168, 85, 247, 0.3);
+            border-style: solid;
+        }
+
+        .favorite-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 0.8rem;
+            border-left: 3px solid #ec4899;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .favorite-item.ai-powered {
+            border-left: 3px solid #10b981;
+        }
+
+        .favorite-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .favorite-item .title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            padding-right: 30px;
+        }
+
+        .favorite-item .meta {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .delete-favorite-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .delete-favorite-btn:hover {
+            background: rgba(239, 68, 68, 0.5);
+            transform: scale(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .modal-content h2 {
+            margin-bottom: 1.5rem;
+            color: #a855f7;
+        }
+
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            font-family: inherit;
+        }
+
+        .modal-content textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 2rem;
+            font-style: italic;
+        }
+
+        .api-info {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧠 Infinite Brainstorm <span class="ai-badge">🤖 IA Activée</span></h1>
+        <div class="header-buttons">
+            <button class="settings-btn" onclick="openApiModal()">🔑 Config API</button>
+            <button class="settings-btn" onclick="exportFavorites()">📥 Exporter Favoris</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <h2>📦 Cellules Disponibles</h2>
+            <div id="cellsList"></div>
+            <button class="add-cell-btn" onclick="openAddCellModal()">➕ Créer une cellule</button>
+        </div>
+
+        <div class="fusion-zone" id="workspace">
+            <div class="workspace-helper" id="workspaceHelper">
+                🎯 Glissez des cellules depuis la gauche<br>
+                💫 Superposez-les pour les fusionner avec l'IA
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <h2>⭐ Favoris</h2>
+            <div id="favoritesList"></div>
+        </div>
+    </div>
+
+    <!-- Modal pour ajouter une cellule -->
+    <div class="modal" id="addCellModal">
+        <div class="modal-content">
+            <h2>➕ Créer une nouvelle cellule</h2>
+            <input type="text" id="newCellInput" placeholder="Ex: Mystère, Robot, Cuisine..." maxlength="20">
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="createCustomCell()">Créer</button>
+                <button class="btn-secondary" onclick="closeAddCellModal()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour configurer l'API -->
+    <div class="modal" id="apiModal">
+        <div class="modal-content">
+            <h2>🔑 Configuration API Hugging Face</h2>
+            <div class="api-info">
+                <strong>Comment obtenir une clé API gratuite :</strong><br>
+                1. Allez sur <a href="https://huggingface.co/settings/tokens" target="_blank" style="color: #10b981;">huggingface.co</a><br>
+                2. Créez un compte gratuit<br>
+                3. Générez un token d'accès<br>
+                4. Collez-le ci-dessous
+            </div>
+            <input type="text" id="apiKeyInput" placeholder="hf_..." value="">
+            <textarea id="systemPromptInput" placeholder="Instructions pour l'IA (optionnel)"></textarea>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="saveApiConfig()">💾 Enregistrer</button>
+                <button class="btn-secondary" onclick="closeApiModal()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const baseCells = ['Challenge', '24H', 'Ballon', 'Argent', 'IA', 'YouTube', 'Extrême', 'Expérience', 'Interdit'];
+        
+        let cells = [...baseCells];
+        let customCells = [];
+        let fusionCache = {};
+        let favorites = [];
+        let workspaceCells = [];
+        let draggedCell = null;
+        let dragOffset = { x: 0, y: 0 };
+        let collisionTarget = null;
+
+        // Configuration API
+        let apiKey = '';
+        let systemPrompt = `[INST] Tu es un expert en création de contenu viral pour YouTube. 
+Ton rôle est de générer des titres accrocheurs en français.
+
+Règles :
+1. Réponds UNIQUEMENT avec le titre
+2. Maximum 10 mots
+3. Utilise des émoticônes si pertinent
+4. Sois créatif et viral
+
+Format de réponse :
+Titre uniquement, sans explication.
+[/INST]`;
+
+        // Génération d'idées avec l'IA Hugging Face
+        // Remplacez TOUTE la fonction generateIdeaWithAI par ceci :
+
+async function generateIdeaWithAI(cell1, cell2) {
+    if (!apiKey) {
+        console.log('Mode basique activé (pas de clé API)');
+        return generateIdeaBasic(cell1, cell2);
+    }
+
+    // URL de votre fonction Netlify
+    const PROXY_URL = '/.netlify/functions/generate';
+    // OU selon votre domaine : 'https://infinitebrainstormai.netlify.app/.netlify/functions/generate'
+
+    const prompt = `[INST] Crée un titre viral de vidéo YouTube en français qui combine "${cell1}" et "${cell2}". 
+    Règles:
+    1. Titre en français uniquement
+    2. Maximum 8 mots
+    3. Utilise des émoticônes si pertinent
+    4. Sois créatif et accrocheur
+    
+    Titre pour "${cell1}" + "${cell2}" : [/INST]`;
+
+    try {
+        console.log('Génération avec Netlify Function...');
+        
+        const response = await fetch(PROXY_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                prompt: prompt,
+                apiKey: apiKey
+            })
+        });
+
+        if (!response.ok) {
+            console.warn('Netlify Function échouée, mode basique activé');
+            return generateIdeaBasic(cell1, cell2);
+        }
+
+        const data = await response.json();
+        
+        // Extraire le texte
+        let generatedText = '';
+        if (Array.isArray(data) && data[0] && data[0].generated_text) {
+            generatedText = data[0].generated_text;
+        } else if (data.generated_text) {
+            generatedText = data.generated_text;
+        } else if (typeof data === 'string') {
+            generatedText = data;
+        } else if (data.error) {
+            throw new Error(data.error);
+        }
+
+        // Nettoyer
+        generatedText = generatedText.trim();
+        
+        // Retirer les balises [INST]
+        generatedText = generatedText.replace(/\[INST\].*?\[\/INST\]/g, '');
+        
+        // Prendre première ligne
+        generatedText = generatedText.split('\n')[0].trim();
+        
+        // Retirer guillemets
+        generatedText = generatedText.replace(/^["']|["']$/g, '');
+        
+        // Si trop court, utiliser mode basique
+        if (!generatedText || generatedText.length < 5) {
+            throw new Error('Texte généré trop court');
+        }
+
+        // Créer les tags
+        const tags = [];
+        if (cell1.includes('Challenge') || cell2.includes('Challenge')) tags.push('🎯 Challenge');
+        if (cell1.includes('24H') || cell2.includes('24H')) tags.push('⏰ 24H');
+        if (cell1.includes('Argent') || cell2.includes('Argent')) tags.push('💰 Argent');
+        if (cell1.includes('IA') || cell2.includes('IA')) tags.push('🤖 IA');
+        if (cell1.includes('Extrême') || cell2.includes('Extrême')) tags.push('🔥 Extrême');
+        if (cell1.includes('Interdit') || cell2.includes('Interdit')) tags.push('⚠️ Interdit');
+        tags.push('🤖 IA Hugging Face');
+
+        return {
+            title: generatedText,
+            tags: tags,
+            cells: [cell1, cell2],
+            aiGenerated: true
+        };
+
+    } catch (error) {
+        console.error('Erreur génération IA:', error.message);
+        return generateIdeaBasic(cell1, cell2);
+    }
+}
+
+        // Génération basique (fallback)
+        function generateIdeaBasic(cell1, cell2) {
+            const key = [cell1, cell2].sort().join('+');
+            
+            if (fusionCache[key]) {
+                return fusionCache[key];
+            }
+
+            const actionVerbs = [
+                'créer', 'survivre à', 'tester', 'vivre', 'construire', 'défier', 'transformer',
+                'découvrir', 'révéler', 'explorer', 'maîtriser', 'affronter', 'gagner', 'perdre',
+                'contrôler', 'pirater', 'détruire', 'fabriquer', 'copier', 'voler', 'acheter'
+            ];
+
+            const intensifiers = [
+                'extrême', 'impossible', 'dangereux', 'fou', 'ultime', 'secret', 'interdit',
+                'mystérieux', 'viral', 'choquant', 'incroyable', 'surprenant', 'épique'
+            ];
+
+            const patterns = [
+                `${cell1} ${cell2} pendant 24h`,
+                `Challenge ${cell1} avec ${cell2}`,
+                `${cell1} vs ${cell2}`,
+                `Je ${actionVerbs[Math.floor(Math.random() * actionVerbs.length)]} ${cell1} avec ${cell2}`,
+                `${cell2} ${intensifiers[Math.floor(Math.random() * intensifiers.length)]} : ${cell1}`,
+                `${cell1} + ${cell2}`,
+                `Expérience ${cell1} ${cell2}`,
+                `${cell1} contrôle mon ${cell2}`,
+                `Je transforme ${cell1} en ${cell2}`,
+                `24h avec ${cell1} ${cell2}`
+            ];
+
+            const title = patterns[Math.floor(Math.random() * patterns.length)];
+            const tags = [];
+            
+            if (cell1.includes('Challenge') || cell2.includes('Challenge')) tags.push('🎯 Challenge');
+            if (cell1.includes('24H') || cell2.includes('24H')) tags.push('⏰ 24H');
+            if (cell1.includes('Argent') || cell2.includes('Argent')) tags.push('💰 Argent');
+            if (cell1.includes('IA') || cell2.includes('IA')) tags.push('🤖 IA');
+            if (cell1.includes('Extrême') || cell2.includes('Extrême')) tags.push('🔥 Extrême');
+            if (cell1.includes('Interdit') || cell2.includes('Interdit')) tags.push('⚠️ Interdit');
+
+            const result = { title, tags, cells: [cell1, cell2], aiGenerated: false };
+            fusionCache[key] = result;
+            
+            return result;
+        }
+
+        function renderCells() {
+            const allCells = [...cells, ...customCells];
+            const cellsList = document.getElementById('cellsList');
+            cellsList.innerHTML = allCells.map(cell => 
+                `<div class="cell" draggable="true" ondragstart="startDragFromSidebar(event, '${cell}')">${cell}</div>`
+            ).join('');
+        }
+
+        function startDragFromSidebar(e, cellName) {
+            e.dataTransfer.setData('cellName', cellName);
+            e.dataTransfer.setData('fromSidebar', 'true');
+        }
+
+        let cellIdCounter = Date.now();
+        
+        function createWorkspaceCell(name, x, y) {
+            const id = cellIdCounter++;
+            const cell = {
+                id,
+                name,
+                x,
+                y
+            };
+            
+            workspaceCells.push(cell);
+            renderWorkspace();
+            hideHelperIfNeeded();
+            saveToLocalStorage();
+            
+            return cell;
+        }
+
+        function renderWorkspace() {
+            const workspace = document.getElementById('workspace');
+            const existingCells = workspace.querySelectorAll('.workspace-cell');
+            existingCells.forEach(cell => cell.remove());
+            
+            workspaceCells.forEach(cell => {
+                const cellEl = document.createElement('div');
+                cellEl.className = 'workspace-cell';
+                cellEl.textContent = cell.name;
+                cellEl.style.left = cell.x + 'px';
+                cellEl.style.top = cell.y + 'px';
+                cellEl.dataset.cellId = cell.id;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-cell-btn';
+                deleteBtn.innerHTML = '×';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteWorkspaceCell(cell.id);
+                };
+                cellEl.appendChild(deleteBtn);
+                
+                cellEl.addEventListener('mousedown', startDragWorkspaceCell);
+                
+                workspace.appendChild(cellEl);
+            });
+        }
+
+        function hideHelperIfNeeded() {
+            const helper = document.getElementById('workspaceHelper');
+            if (workspaceCells.length > 0) {
+                helper.style.display = 'none';
+            } else {
+                helper.style.display = 'block';
+            }
+        }
+
+        function startDragWorkspaceCell(e) {
+            if (e.target.classList.contains('delete-cell-btn')) return;
+            
+            draggedCell = e.currentTarget;
+            const rect = draggedCell.getBoundingClientRect();
+            
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            
+            draggedCell.classList.add('dragging');
+            collisionTarget = null;
+            
+            document.addEventListener('mousemove', dragWorkspaceCell);
+            document.addEventListener('mouseup', stopDragWorkspaceCell);
+        }
+
+        function dragWorkspaceCell(e) {
+            if (!draggedCell) return;
+            
+            const workspace = document.getElementById('workspace');
+            const workspaceRect = workspace.getBoundingClientRect();
+            
+            let x = e.clientX - workspaceRect.left - dragOffset.x;
+            let y = e.clientY - workspaceRect.top - dragOffset.y;
+            
+            x = Math.max(0, Math.min(x, workspaceRect.width - draggedCell.offsetWidth));
+            y = Math.max(0, Math.min(y, workspaceRect.height - draggedCell.offsetHeight));
+            
+            draggedCell.style.left = x + 'px';
+            draggedCell.style.top = y + 'px';
+            
+            checkCollision();
+        }
+
+        function stopDragWorkspaceCell() {
+            if (!draggedCell) return;
+            
+            const draggedId = Number(draggedCell.dataset.cellId);
+            
+            if (collisionTarget) {
+                const collisionId = Number(collisionTarget.dataset.cellId);
+                
+                draggedCell.classList.remove('dragging');
+                document.querySelectorAll('.workspace-cell').forEach(c => c.classList.remove('highlight'));
+                document.removeEventListener('mousemove', dragWorkspaceCell);
+                document.removeEventListener('mouseup', stopDragWorkspaceCell);
+                
+                draggedCell = null;
+                const target = collisionTarget;
+                collisionTarget = null;
+                
+                fuseCells(draggedId, collisionId);
+            } else {
+                const cell = workspaceCells.find(c => c.id === draggedId);
+                if (cell) {
+                    cell.x = parseInt(draggedCell.style.left);
+                    cell.y = parseInt(draggedCell.style.top);
+                    saveToLocalStorage();
+                }
+                
+                draggedCell.classList.remove('dragging');
+                document.removeEventListener('mousemove', dragWorkspaceCell);
+                document.removeEventListener('mouseup', stopDragWorkspaceCell);
+                
+                draggedCell = null;
+                collisionTarget = null;
+            }
+        }
+
+        function checkCollision() {
+            if (!draggedCell) return;
+            
+            const draggedRect = draggedCell.getBoundingClientRect();
+            collisionTarget = null;
+            
+            document.querySelectorAll('.workspace-cell').forEach(cell => {
+                if (cell === draggedCell) return;
+                
+                cell.classList.remove('highlight');
+                
+                const rect = cell.getBoundingClientRect();
+                const overlapX = Math.max(0, Math.min(draggedRect.right, rect.right) - Math.max(draggedRect.left, rect.left));
+                const overlapY = Math.max(0, Math.min(draggedRect.bottom, rect.bottom) - Math.max(draggedRect.top, rect.top));
+                
+                const draggedArea = draggedRect.width * draggedRect.height;
+                const overlapArea = overlapX * overlapY;
+                const overlapPercentage = overlapArea / draggedArea;
+                
+                if (overlapPercentage > 0.3) {
+                    collisionTarget = cell;
+                    cell.classList.add('highlight');
+                }
+            });
+        }
+
+        async function fuseCells(id1, id2) {
+            const cell1 = workspaceCells.find(c => c.id === id1);
+            const cell2 = workspaceCells.find(c => c.id === id2);
+            
+            if (!cell1 || !cell2) {
+                console.error('Cellule introuvable!');
+                return;
+            }
+            
+            const newX = (cell1.x + cell2.x) / 2;
+            const newY = (cell1.y + cell2.y) / 2;
+            
+            // Créer une cellule temporaire pour montrer le chargement
+            const tempId = cellIdCounter++;
+            const tempCell = {
+                id: tempId,
+                name: '🤖 Génération en cours...',
+                x: newX,
+                y: newY
+            };
+            
+            // Supprimer les deux cellules originales
+            workspaceCells = workspaceCells.filter(c => c.id !== id1 && c.id !== id2);
+            workspaceCells.push(tempCell);
+            renderWorkspace();
+            
+            // Ajouter l'animation de génération
+            setTimeout(() => {
+                const tempCellEl = document.querySelector(`[data-cell-id="${tempId}"]`);
+                if (tempCellEl) {
+                    tempCellEl.classList.add('ai-generating');
+                    // Dans fuseCells(), après avoir ajouté la classe ai-generating
+const loadingText = document.createElement('div');
+loadingText.className = 'loading-text';
+loadingText.innerHTML = '<span class="loading-spinner"></span> L\'IA réfléchit...';
+loadingText.style.cssText = `
+    position: absolute;
+    bottom: -30px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: #10b981;
+`;
+tempCellEl.appendChild(loadingText);
+                }
+            }, 10);
+            
+            // Générer l'idée avec l'IA
+            const result = await generateIdeaWithAI(cell1.name, cell2.name);
+            
+            // Remplacer la cellule temporaire par le résultat
+            workspaceCells = workspaceCells.filter(c => c.id !== tempId);
+            
+            const newId = cellIdCounter++;
+            const newCell = {
+                id: newId,
+                name: result.title,
+                x: newX,
+                y: newY
+            };
+            
+            workspaceCells.push(newCell);
+            renderWorkspace();
+            
+            // Animation d'apparition
+            setTimeout(() => {
+                const newCellEl = document.querySelector(`[data-cell-id="${newId}"]`);
+                if (newCellEl) {
+                    newCellEl.classList.add('new-cell');
+                }
+            }, 10);
+            
+            // Ajouter aux favoris
+            addToFavoritesAuto(result);
+            
+            saveToLocalStorage();
+            hideHelperIfNeeded();
+        }
+
+        function deleteWorkspaceCell(id) {
+            workspaceCells = workspaceCells.filter(c => c.id !== id);
+            renderWorkspace();
+            hideHelperIfNeeded();
+            saveToLocalStorage();
+        }
+
+        function addToFavoritesAuto(result) {
+            const fav = {
+                ...result,
+                timestamp: Date.now(),
+                id: Date.now()
+            };
+            
+            favorites.unshift(fav);
+            renderFavorites();
+            saveToLocalStorage();
+        }
+
+        function renderFavorites() {
+            const favList = document.getElementById('favoritesList');
+            if (favorites.length === 0) {
+                favList.innerHTML = '<div class="empty-state">Aucun favori pour le moment</div>';
+                return;
+            }
+            
+            favList.innerHTML = favorites.map(fav => `
+                <div class="favorite-item ${fav.aiGenerated ? 'ai-powered' : ''}">
+                    <div class="title">💡 ${fav.title}</div>
+                    <div class="meta">${new Date(fav.timestamp).toLocaleDateString('fr-FR')} ${fav.aiGenerated ? '• 🤖 IA' : ''}</div>
+                    <button class="delete-favorite-btn" onclick="deleteFavorite(${fav.id})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteFavorite(id) {
+            if (confirm('Supprimer ce favori ?')) {
+                favorites = favorites.filter(f => f.id !== id);
+                renderFavorites();
+                saveToLocalStorage();
+            }
+        }
+
+        function openAddCellModal() {
+            document.getElementById('addCellModal').classList.add('active');
+            document.getElementById('newCellInput').value = '';
+            document.getElementById('newCellInput').focus();
+        }
+
+        function closeAddCellModal() {
+            document.getElementById('addCellModal').classList.remove('active');
+        }
+
+        function createCustomCell() {
+            const input = document.getElementById('newCellInput');
+            const cellName = input.value.trim();
+            
+            if (!cellName) {
+                alert('⚠️ Veuillez entrer un nom');
+                return;
+            }
+            
+            if (cells.includes(cellName) || customCells.includes(cellName)) {
+                alert('⚠️ Cette cellule existe déjà');
+                return;
+            }
+            
+            customCells.push(cellName);
+            renderCells();
+            closeAddCellModal();
+            saveToLocalStorage();
+            
+            alert(`✅ Cellule "${cellName}" créée !`);
+        }
+
+        function openApiModal() {
+            document.getElementById('apiModal').classList.add('active');
+            document.getElementById('apiKeyInput').value = apiKey;
+            document.getElementById('systemPromptInput').value = systemPrompt;
+            document.getElementById('apiKeyInput').focus();
+        }
+
+        function closeApiModal() {
+            document.getElementById('apiModal').classList.remove('active');
+        }
+
+        function saveApiConfig() {
+            apiKey = document.getElementById('apiKeyInput').value.trim();
+            systemPrompt = document.getElementById('systemPromptInput').value.trim();
+            
+            if (apiKey && !apiKey.startsWith('hf_')) {
+                alert('⚠️ La clé API doit commencer par "hf_"');
+                return;
+            }
+            
+            saveToLocalStorage();
+            closeApiModal();
+            
+            if (apiKey) {
+                alert('✅ Configuration API enregistrée ! L\'IA est maintenant activée.');
+            } else {
+                alert('✅ Configuration sauvegardée. Mode basique activé (sans IA).');
+            }
+        }
+
+        function exportFavorites() {
+            if (favorites.length === 0) {
+                alert('⚠️ Aucun favori à exporter');
+                return;
+            }
+            
+            let text = '🧠 INFINITE BRAINSTORM - MES FAVORIS\n';
+            text += '═'.repeat(50) + '\n\n';
+            
+            favorites.forEach((fav, i) => {
+                text += `${i + 1}. ${fav.title}\n`;
+                text += `   Cellules: ${fav.cells.join(' + ')}\n`;
+                text += `   Tags: ${fav.tags.join(', ')}\n`;
+                text += `   Date: ${new Date(fav.timestamp).toLocaleDateString('fr-FR')}\n`;
+                if (fav.aiGenerated) {
+                    text += `   🤖 Généré par IA\n`;
+                }
+                text += '\n';
+            });
+            
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `infinite-brainstorm-favoris-${Date.now()}.txt`;
+            a.click();
+        }
+
+        function saveToLocalStorage() {
+            const data = {
+                customCells,
+                fusionCache,
+                favorites,
+                workspaceCells,
+                apiKey,
+                systemPrompt
+            };
+            localStorage.setItem('infiniteBrainstorm', JSON.stringify(data));
+        }
+
+        function loadFromLocalStorage() {
+    const data = localStorage.getItem('infiniteBrainstorm');
+    if (data) {
+        try {
+            const parsed = JSON.parse(data);
+            customCells = parsed.customCells || [];
+            fusionCache = parsed.fusionCache || {};
+            favorites = parsed.favorites || [];
+            workspaceCells = parsed.workspaceCells || [];
+            apiKey = parsed.apiKey || '';
+            systemPrompt = parsed.systemPrompt || "Tu es un générateur créatif d'idées de vidéos YouTube virales. Génère des titres accrocheurs et originaux en français basés sur les concepts donnés.";
+            
+            // Re-render après le chargement
+            renderCells();
+            renderFavorites();
+            renderWorkspace();
+            hideHelperIfNeeded();
+        } catch (e) {
+            console.error('Erreur lors du chargement:', e);
+            // Initialiser avec des valeurs par défaut
+            customCells = [];
+            favorites = [];
+            workspaceCells = [];
+        }
+    }
+}
+
+        // Initialisation
+        loadFromLocalStorage();
+        renderCells();
+        renderFavorites();
+        renderWorkspace();
+        hideHelperIfNeeded();
+
+        // Gestion du drag and drop depuis la sidebar
+        const workspace = document.getElementById('workspace');
+        
+        workspace.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+        
+        workspace.addEventListener('drop', (e) => {
+            e.preventDefault();
+            
+            const fromSidebar = e.dataTransfer.getData('fromSidebar');
+            if (!fromSidebar) return;
+            
+            const cellName = e.dataTransfer.getData('cellName');
+            const workspaceRect = workspace.getBoundingClientRect();
+            
+            const x = e.clientX - workspaceRect.left - 50;
+            const y = e.clientY - workspaceRect.top - 20;
+            
+            createWorkspaceCell(cellName, x, y);
+        });
+
+        // Event listeners pour les modales
+        document.getElementById('newCellInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createCustomCell();
+        });
+
+        document.getElementById('addCellModal').addEventListener('click', (e) => {
+            if (e.target.id === 'addCellModal') closeAddCellModal();
+        });
+
+        document.getElementById('apiModal').addEventListener('click', (e) => {
+            if (e.target.id === 'apiModal') closeApiModal();
+        });
+        // Initialisation supplémentaire
+        window.addEventListener('load', () => {
+            loadFromLocalStorage();
+            renderCells();
+            renderFavorites();
+            renderWorkspace();
+            hideHelperIfNeeded();
+        });
+    </script>
+</body>
+</html>

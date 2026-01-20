@@ -1,0 +1,12 @@
+{
+  "name": "brainstorm-netlify",
+  "version": "1.0.0",
+  "description": "Infinite Brainstorm avec Netlify Functions",
+  "scripts": {
+    "build": "echo 'No build required'"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.9"
+  },
+  "devDependencies": {}
+}
